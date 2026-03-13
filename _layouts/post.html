@@ -36,7 +36,7 @@ layout: default
   <nav class="post-nav">
     <a href="{{ '/blog/' | relative_url }}" class="post-nav-back">Tutti gli articoli</a>
     {% if page.next %}
-    <a href="{{ page.next.url | relative_url }}" style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--mist);transition:color 0.2s;" onmouseover="this.style.color='var(--paper)'" onmouseout="this.style.color='var(--mist)'">
+    <a href="{{ page.next.url | relative_url }}" class="post-nav-next">
       Prossimo →
     </a>
     {% endif %}
