@@ -1,0 +1,41 @@
+title: "2brainlab"
+tagline: "AI Engineering concreta."
+description: "Strumenti testati, prototipi validati, risultati misurabili. Il blog tecnico di 2brainlab."
+url: "https://ai-train-f2.github.io"
+baseurl: "/org"
+
+lang: it
+author:
+  name: "2brainlab"
+  email: ""
+
+permalink: /blog/:year/:month/:day/:title/
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+
+highlighter: rouge
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+feed:
+  path: feed.xml
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - node_modules/
+  - vendor/
+
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"

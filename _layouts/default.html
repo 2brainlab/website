@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if page.title %}{{ page.title }} — {{ site.title }}{% else %}{{ site.title }} — {{ site.tagline }}{% endif %}</title>
+  <meta name="description" content="{% if page.excerpt %}{{ page.excerpt | strip_html | truncate: 160 }}{% else %}{{ site.description }}{% endif %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+  {% feed_meta %}
+  {% seo %}
+</head>
+<body>
+
+  <header class="site-header">
+    <a href="{{ '/' | relative_url }}" class="logo-mark">
+      <div class="logo-icon">2b</div>
+      <div class="logo-text">2brain<span>lab</span></div>
+    </a>
+    <nav class="site-nav">
+      <a href="{{ '/blog/' | relative_url }}" {% if page.url contains '/blog/' or page.layout == 'post' %}class="active"{% endif %}>Blog</a>
+    </nav>
+  </header>
+
+  <main>
+    {{ content }}
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-brand">
+      <div class="logo-icon">2b</div>
+      <div class="logo-text">2brain<span>lab</span></div>
+    </div>
+    <div class="footer-tagline">Pragmatismo · Trasparenza · Qualità</div>
+    <div>© {{ site.time | date: '%Y' }} 2brainlab</div>
+  </footer>
+
+</body>
+</html>
