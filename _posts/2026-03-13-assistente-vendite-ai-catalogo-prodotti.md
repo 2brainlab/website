@@ -4,12 +4,12 @@ title: "Dal catalogo sparso a un assistente vendite AI per rispondere ai clienti
 date: 2026-03-13
 author: 2brainlab
 tags:
-	- "AI sales enablement"
-	- "catalog intelligence"
-	- n8n
-	- "chatbot aziendale"
-	- "product data"
-	- "automazione commerciale"
+  - "AI sales enablement"
+  - "catalog intelligence"
+  - n8n
+  - "chatbot aziendale"
+  - "product data"
+  - "automazione commerciale"
 excerpt: "Quando le informazioni di prodotto sono distribuite tra PDF, sito web e materiali non strutturati, il team vendite perde tempo e rischia risposte incomplete. In questo use case abbiamo centralizzato il catalogo, costruito un agente in n8n e reso disponibili risposte tecniche immediate tramite una chat usata direttamente dai venditori."
 ---
 
@@ -55,13 +55,13 @@ subito una risposta tecnica utilizzabile con il cliente.
 L’architettura è stata costruita in tre passaggi:
 
 1. **Raccolta delle fonti**: abbiamo implementato parser e scraper per
-	recuperare le informazioni da PDF, sito web e altre sorgenti rilevanti.
+  recuperare le informazioni da PDF, sito web e altre sorgenti rilevanti.
 2. **Razionalizzazione del catalogo**: abbiamo normalizzato i dati, eliminato
-	ridondanze e trasformato contenuti dispersi in una base informativa
-	coerente.
+  ridondanze e trasformato contenuti dispersi in una base informativa
+  coerente.
 3. **Accesso conversazionale**: abbiamo costruito un agente con n8n,
-	interrogabile tramite il nodo chat di n8n, così che i venditori potessero
-	usarlo online come un assistente operativo.
+  interrogabile tramite il nodo chat di n8n, così che i venditori potessero
+  usarlo online come un assistente operativo.
 
 Per la persistenza abbiamo inserito il catalogo consolidato in un database
 relazionale. Questa scelta ci ha dato una struttura chiara per prodotti,
