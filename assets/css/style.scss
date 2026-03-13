@@ -35,14 +35,30 @@ a { color: inherit; text-decoration: none; }
 
 /* ─── HEADER ────────────────────────────────────────── */
 .site-header {
-  border-bottom: 1px solid rgba(14,13,11,0.12);
+  border-bottom: 1px solid rgba(244,240,232,0.16);
   padding: 20px 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: sticky; top: 0; z-index: 100;
   backdrop-filter: blur(12px);
-  background: rgba(244,240,232,0.92);
+  background: rgba(14,13,11,0.92);
+}
+
+.site-header .logo-text {
+  color: var(--paper);
+}
+
+.site-header .site-nav a {
+  color: rgba(244,240,232,0.72);
+}
+
+.site-header .site-nav a:hover {
+  color: var(--paper);
+}
+
+.site-header .site-nav a.active {
+  color: #ff9b7f;
 }
 
 .logo-mark {

@@ -1,8 +1,8 @@
 title: "2brainlab"
 tagline: "AI Engineering concreta."
 description: "Strumenti testati, prototipi validati, risultati misurabili. Il blog tecnico di 2brainlab."
-url: "https://ai-train-f2.github.io"
-baseurl: "/org"
+url: "https://2brainlab.it"
+baseurl: ""
 
 lang: it
 author:
