@@ -14,7 +14,12 @@ layout: default
 
     <div class="post-info">
       {% if page.author %}
-      <span class="post-info-author">{{ page.author }}</span>
+      <span class="post-info-author-wrap">
+        {% if page.author_image %}
+        <img class="post-author-avatar" src="{{ page.author_image | relative_url }}" alt="{{ page.author }}" loading="lazy" />
+        {% endif %}
+        <span class="post-info-author">{{ page.author }}</span>
+      </span>
       <span class="post-info-sep">·</span>
       {% endif %}
       <span class="post-info-date">{{ page.date | date: "%d %B %Y" }}</span>
