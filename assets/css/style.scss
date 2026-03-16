@@ -371,14 +371,15 @@ a { color: inherit; text-decoration: none; }
 .post-info-author-wrap {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 .post-author-avatar {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid rgba(14,13,11,0.14);
+  flex-shrink: 0;
+  border: 1px solid rgba(14,13,11,0.12);
 }
 .post-info-date,
 .post-info-author {
@@ -407,6 +408,7 @@ a { color: inherit; text-decoration: none; }
   font-size: 16px;
   line-height: 1.75;
   color: rgba(14,13,11,0.84);
+  overflow-x: hidden;
 }
 .post-body h2 {
   font-family: 'Syne', sans-serif;
@@ -439,8 +441,10 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: 12px;
 }
 .post-body p { margin-bottom: 20px; }
-.post-body img {
+.post-body img,
+.post-body p > img {
   display: block;
+  width: 100%;
   max-width: 100%;
   height: auto;
   margin: 28px auto;
