@@ -3,6 +3,7 @@ layout: post
 title: "Cosa cambia davvero con gli agenti AI (quando esci dalla demo)"
 date: 2026-03-16
 author: "Federico François"
+author_image: "/assets/img/authors/federico-francois.png"
 tags:
   - "Agenti AI"
   - "AI Engineering"
