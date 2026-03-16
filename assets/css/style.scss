@@ -374,8 +374,8 @@ a { color: inherit; text-decoration: none; }
   gap: 8px;
 }
 .post-author-avatar {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid rgba(14,13,11,0.14);
@@ -439,6 +439,13 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: 12px;
 }
 .post-body p { margin-bottom: 20px; }
+.post-body img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 28px auto;
+  border-radius: 10px;
+}
 .post-body strong { color: var(--ink); font-weight: 600; }
 .post-body em { font-style: italic; color: var(--copper); }
 .post-body a {
