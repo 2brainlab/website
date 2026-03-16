@@ -2,7 +2,7 @@
 layout: post
 title: "Cosa cambia davvero con gli agenti AI (quando esci dalla demo)"
 date: 2026-03-16
-author: 2brainlab
+author: "Federico François"
 tags:
   - "Agenti AI"
   - "AI Engineering"
