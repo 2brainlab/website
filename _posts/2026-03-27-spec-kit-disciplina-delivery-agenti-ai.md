@@ -16,6 +16,8 @@ excerpt: "Spec-kit è utile non tanto perché accelera il primo giorno, ma perch
 
 Spec-kit è utile non tanto perché accelera il primo giorno, ma perché rende più leggibile il decimo. Quando lavori con agenti AI su un sistema nuovo, il valore reale non sta nel volume di codice prodotto, ma nella qualità del feedback loop: decisioni esplicite, task piccoli, validazione continua.
 
+![Spec-kit come struttura di lavoro per rendere più disciplinato il delivery con agenti AI]({{ '/assets/img/blog/spec-kit.png' | relative_url }})
+
 ## Il problema
 
 Questo non è un articolo sul contrasto tra vibe coding e sviluppo strutturato. È un articolo sulla disciplina di delivery.
@@ -85,7 +87,7 @@ Se il cambiamento è piccolo, capisci rapidamente cosa ha rotto cosa. Se unisci 
 
 A un certo punto ho rotto io stesso questa disciplina: 64 file modificati in un solo burst, con circa 2300 linee aggiunte.
 
-![Esperimento spec-kit: il punto in cui il change set diventa troppo grande]({{ '/assets/img/blog/spec-kit.png' | relative_url }})
+![Big-bang change set: il punto in cui il feedback loop smette di essere leggibile]({{ '/assets/img/blog/big-bang.png' | relative_url }})
 
 Da lì il feedback loop ha iniziato a degradarsi:
 
