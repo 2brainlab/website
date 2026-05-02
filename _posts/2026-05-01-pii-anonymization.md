@@ -4,13 +4,12 @@ title: “Anonimizzazione reversibile del PII: un’alternativa ai modelli on-pr
 date: 2026-05-01
 author: “Federico Cerruto”
 tags:
-
-- “Privacy”
-- “PII”
-- “AI Engineering”
-- “Compliance”
-- “Agenti AI”
-  excerpt: “Se non puoi far girare modelli in locale ma devi proteggere i dati dei tuoi utenti, l’anonimizzazione reversibile ti permette di usare LLM cloud senza esporre il PII. Un PoC concreto, con codice.”
+ - “Privacy”
+ - “PII”
+ - “AI Engineering”
+ - “Compliance”
+ - “Agenti AI”
+excerpt: “Se non puoi far girare modelli in locale ma devi proteggere i dati dei tuoi utenti, l’anonimizzazione reversibile ti permette di usare LLM cloud senza esporre il PII. Un PoC concreto, con codice.”
 ---
 
 ## TL;DR
