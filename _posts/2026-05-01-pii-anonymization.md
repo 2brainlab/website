@@ -1,5 +1,4 @@
 ---
-
 layout: post
 title: “Anonimizzazione reversibile del PII: un’alternativa ai modelli on-premise”
 date: 2026-05-01
@@ -12,7 +11,6 @@ tags:
 - “Compliance”
 - “Agenti AI”
   excerpt: “Se non puoi far girare modelli in locale ma devi proteggere i dati dei tuoi utenti, l’anonimizzazione reversibile ti permette di usare LLM cloud senza esporre il PII. Un PoC concreto, con codice.”
-
 ---
 
 ## TL;DR
