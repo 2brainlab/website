@@ -21,6 +21,7 @@
     </a>
     <nav class="site-nav">
       <a href="{{ '/blog/' | relative_url }}" {% if page.url contains '/blog/' or page.layout == 'post' %}class="active"{% endif %}>Blog</a>
+      <a href="{{ '/use-cases/' | relative_url }}" {% if page.url contains '/use-cases/' %}class="active"{% endif %}>Use cases</a>
       <a href="{{ '/chi-siamo/' | relative_url }}" {% if page.url contains '/chi-siamo/' %}class="active"{% endif %}>Chi siamo</a>
     </nav>
   </header>
