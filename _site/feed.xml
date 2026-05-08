@@ -1,0 +1,699 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="it"><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://2brainlab.it/feed.xml" rel="self" type="application/atom+xml" /><link href="https://2brainlab.it/" rel="alternate" type="text/html" hreflang="it" /><updated>2026-05-08T18:59:40+00:00</updated><id>https://2brainlab.it/feed.xml</id><title type="html">2brainlab</title><subtitle>Strumenti testati, prototipi validati, risultati misurabili. Il blog tecnico di 2brainlab.</subtitle><author><name>2brainlab</name><email></email></author><entry><title type="html">Anonimizzazione reversibile del PII: un’alternativa ai modelli on-premise</title><link href="https://2brainlab.it/blog/2026/05/01/pii-anonymization/" rel="alternate" type="text/html" title="Anonimizzazione reversibile del PII: un’alternativa ai modelli on-premise" /><published>2026-05-01T00:00:00+00:00</published><updated>2026-05-01T00:00:00+00:00</updated><id>https://2brainlab.it/blog/2026/05/01/pii-anonymization</id><content type="html" xml:base="https://2brainlab.it/blog/2026/05/01/pii-anonymization/"><![CDATA[<h2 id="tldr">TL;DR</h2>
+
+<p>Se non puoi far girare modelli on-premise ma hai bisogno di proteggere i dati dei tuoi clienti, l’anonimizzazione reversibile ti permette di usare LLM cloud senza mai trasmettere nomi, email o numeri di telefono reali. Il modello lavora su placeholder tipizzati. Il risultato viene ripristinato lato client. Funziona con qualsiasi API. Codice: <a href="http://github.com/iron87/anonymizer-poc">github.com/iron87/anonymizer-poc</a></p>
+
+<h2 id="il-problema">Il problema</h2>
+
+<p>Eseguire modelli in locale risolve il problema della privacy, ma ne apre altri: costi infrastrutturali, manutenzione dei modelli, latenza, scelta limitata dei modelli disponibili. Per molti team non è un trade-off accettabile.</p>
+
+<p>Ma inviare dati utente a provider LLM cloud è un problema di compliance. Ogni query che contiene nomi, email, numeri di telefono finisce nei log del provider, nelle audit trail, potenzialmente nei dataset di addestramento.</p>
+
+<p>La risposta classica è “esegui il modello in locale.” E se non puoi?</p>
+
+<h2 id="quando-ha-senso">Quando ha senso</h2>
+
+<p>Questo pattern funziona quando:</p>
+
+<ul>
+  <li>stai elaborando dati di clienti o utenti finali (ticket di supporto, documenti medici, contratti);</li>
+  <li>non puoi eseguire modelli on-premise per costi, complessità o capacità del team;</li>
+  <li>hai bisogno di anonimizzazione reversibile, non di redazione statica.</li>
+</ul>
+
+<p>Alcuni casi d’uso concreti:</p>
+
+<ul>
+  <li><strong>analisi documentale</strong> — riassumere contratti che contengono nomi e indirizzi di clienti;</li>
+  <li><strong>gestione del calendario</strong> — parsare richieste di meeting con email dei partecipanti;</li>
+  <li><strong>automazione del supporto</strong> — generare risposte a ticket che contengono numeri di telefono;</li>
+  <li><strong>elaborazione di dati medici</strong> — lavorare su record clinici senza esporli al provider.</li>
+</ul>
+
+<p>Non ha senso invece per:</p>
+
+<ul>
+  <li>dati interni all’azienda (codice, documenti strategici, email interne) — usa direttamente un modello locale;</li>
+  <li>anonimizzazione unidirezionale (log di audit, report di compliance) — la redazione statica è sufficiente;</li>
+  <li>scenari real-time con requisiti di latenza stretti — il lookup sul vault aggiunge overhead.</li>
+</ul>
+
+<h2 id="come-funziona">Come funziona</h2>
+
+<p>Il flusso è lineare:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Prompt utente (con PII)
+        │
+        ▼
+  [ Anonimizza ]   ──→  mario.rossi@example.com → [REDACTED_EMAIL_ADDRESS_1]
+        │
+        ▼
+  [ Cloud LLM ]   ──→  lavora solo su placeholder
+        │
+        ▼
+  [ Deanonimizza ] ──→  [REDACTED_EMAIL_ADDRESS_1] → mario.rossi@example.com
+        │
+        ▼
+Risposta finale (PII ripristinato)
+</code></pre></div></div>
+
+<p>Ogni sessione mantiene un vault:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">SessionState</span><span class="p">:</span>
+    <span class="n">vault</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>    <span class="c1"># placeholder → valore originale
+</span>    <span class="n">reverse</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>  <span class="c1"># valore originale → placeholder
+</span>    <span class="n">counters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="c1"># entity_type → contatore
+</span></code></pre></div></div>
+
+<p>Presidio individua gli span contenenti PII. Per ogni span, il sistema riutilizza un placeholder esistente se quel valore è già stato incontrato nella sessione, oppure ne crea uno nuovo tipizzato: <code class="language-plaintext highlighter-rouge">[REDACTED_PERSON_1]</code>, <code class="language-plaintext highlighter-rouge">[REDACTED_EMAIL_ADDRESS_1]</code>.</p>
+
+<p>Il prompt anonimizzato viene inviato a qualsiasi API LLM — OpenAI, Anthropic, Azure. La risposta torna con i placeholder intatti. Il vault li ripristina con i valori originali.</p>
+
+<h2 id="provarlo-in-locale">Provarlo in locale</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/iron87/anonymizer-poc
+<span class="nb">cd </span>anonymizer-poc
+docker compose up <span class="nt">--build</span> <span class="nt">-d</span>
+</code></pre></div></div>
+
+<p>Una richiesta di esempio:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-s</span> http://localhost:9000/v1/agent/chat <span class="se">\</span>
+  <span class="nt">-H</span> <span class="s2">"Content-Type: application/json"</span> <span class="se">\</span>
+  <span class="nt">-d</span> <span class="s1">'{
+    "session_id": "demo-1",
+    "model": "local/llama3.2",
+    "message": "Riscrivi questo promemoria: contatta mario.rossi@example.com o il 3331234567 per la riunione."
+  }'</span> | jq <span class="nb">.</span>
+</code></pre></div></div>
+
+<p>Risposta:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"request_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"demo-1"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"model"</span><span class="p">:</span><span class="w"> </span><span class="s2">"llama3.2"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"content"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Ricordati di contattare mario.rossi@example.com o chiamare il 3331234567 per la riunione in programma."</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Il modello non ha mai visto l’email reale né il numero di telefono. Ha lavorato su <code class="language-plaintext highlighter-rouge">[REDACTED_EMAIL_ADDRESS_1]</code> e <code class="language-plaintext highlighter-rouge">[REDACTED_PHONE_NUMBER_1]</code>. La risposta è stata ripristinata tramite il vault di sessione.</p>
+
+<h2 id="cosa-ho-imparato">Cosa ho imparato</h2>
+
+<h3 id="i-placeholder-tipizzati-non-sono-un-dettaglio">I placeholder tipizzati non sono un dettaglio</h3>
+
+<p>Senza informazione di tipo — <code class="language-plaintext highlighter-rouge">[REDACTED_1]</code> invece di <code class="language-plaintext highlighter-rouge">[REDACTED_EMAIL_ADDRESS_1]</code> — il modello perde contesto. Non sa se sta gestendo un nome, un’email o un identificativo arbitrario.</p>
+
+<p>Con i tipi, il modello può ragionare correttamente: “questo è un placeholder email, va usato dove un’email è attesa.” La qualità della risposta cambia in modo misurabile.</p>
+
+<h3 id="il-vault-diventa-la-nuova-superficie-dattacco">Il vault diventa la nuova superficie d’attacco</h3>
+
+<p>Hai spostato il problema, non eliminato. Il vault contiene la mappatura PII ed è il dato sensibile da proteggere.</p>
+
+<p>In produzione servono almeno:</p>
+
+<ul>
+  <li>storage persistente e cifrato (Redis con encryption at rest, o un DB dedicato);</li>
+  <li>policy TTL per la scadenza delle sessioni;</li>
+  <li>controlli di accesso espliciti su chi può interrogare il vault.</li>
+</ul>
+
+<h3 id="il-gateway-semplifica-lorchestrazione">Il gateway semplifica l’orchestrazione</h3>
+
+<p>Il PoC usa Plano come gateway con filtri di input e output. Un approccio equivalente è implementabile con LiteLLM, che offre un modulo dedicato per il PII masking con Presidio. In questo caso ho scelto Plano per sperimentare uno stack diverso da quello che uso di solito.</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">listeners</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="na">type</span><span class="pi">:</span> <span class="s">model</span>
+    <span class="na">port</span><span class="pi">:</span> <span class="m">12000</span>
+    <span class="na">input_filters</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">pii_anonymizer</span>
+    <span class="na">output_filters</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">pii_deanonymizer</span>
+</code></pre></div></div>
+
+<p>Plano gestisce l’orchestrazione dei filtri. L’applicazione invia richieste al gateway senza codice di routing custom. Ma il pattern funziona anche senza gateway: basta chiamare anonymize → LLM → deanonymize in sequenza.</p>
+
+<h2 id="conclusioni">Conclusioni</h2>
+
+<p>L’anonimizzazione reversibile non è la soluzione per tutti i contesti, ma riempie uno spazio preciso: quando i modelli locali sono fuori portata ma i dati degli utenti non possono uscire non protetti.</p>
+
+<p>Il punto più interessante non è tecnico. È organizzativo: questo pattern rende possibile usare i migliori modelli disponibili sul mercato senza rinunciare alla compliance, a patto di accettare che la complessità non sparisce ma si sposta — dal modello al vault, dall’infrastruttura GPU alla gestione del ciclo di vita delle sessioni.</p>
+
+<p>Per un’agenzia tecnica che lavora con clienti enterprise, è esattamente il tipo di trade-off che vale la pena documentare, prototipare e avere pronto come risposta concreta quando arriva la domanda: “ma i nostri dati dove vanno?”</p>
+
+<p><em>PoC completo: <a href="http://github.com/iron87/anonymizer-poc">github.com/iron87/anonymizer-poc</a></em></p>]]></content><author><name>Federico Cerruto</name></author><category term="Privacy" /><category term="PII" /><category term="AI Engineering" /><category term="Compliance" /><category term="Agenti AI" /><summary type="html"><![CDATA[Se non puoi far girare modelli in locale ma devi proteggere i dati dei tuoi utenti, l’anonimizzazione reversibile ti permette di usare LLM cloud senza esporre il PII. Un PoC concreto, con codice.]]></summary></entry><entry><title type="html">Spec-kit e agenti AI: la lezione vera è la disciplina di delivery</title><link href="https://2brainlab.it/blog/2026/03/27/spec-kit-disciplina-delivery-agenti-ai/" rel="alternate" type="text/html" title="Spec-kit e agenti AI: la lezione vera è la disciplina di delivery" /><published>2026-03-27T00:00:00+00:00</published><updated>2026-03-27T00:00:00+00:00</updated><id>https://2brainlab.it/blog/2026/03/27/spec-kit-disciplina-delivery-agenti-ai</id><content type="html" xml:base="https://2brainlab.it/blog/2026/03/27/spec-kit-disciplina-delivery-agenti-ai/"><![CDATA[<h2 id="tldr">TL;DR</h2>
+
+<p>Spec-kit è utile non tanto perché accelera il primo giorno, ma perché rende più leggibile il decimo. Quando lavori con agenti AI su un sistema nuovo, il valore reale non sta nel volume di codice prodotto, ma nella qualità del feedback loop: decisioni esplicite, task piccoli, validazione continua.</p>
+
+<p><img src="/assets/img/blog/spec-kit.png" alt="Spec-kit come struttura di lavoro per rendere più disciplinato il delivery con agenti AI" /></p>
+
+<h2 id="il-problema">Il problema</h2>
+
+<p>Questo non è un articolo sul contrasto tra vibe coding e sviluppo strutturato. È un articolo sulla disciplina di delivery.</p>
+
+<p>L’obiettivo era costruire una piattaforma backend per agenti AI abbastanza concreta da generare apprendimento reale, non una demo buona solo per una presentazione veloce. Il perimetro includeva:</p>
+
+<ul>
+  <li>bootstrap con un solo comando;</li>
+  <li>invocazione API multi-tenant;</li>
+  <li>sessioni conversazionali con memoria;</li>
+  <li>tracing delle esecuzioni;</li>
+  <li>policy controls;</li>
+  <li>stack con FastAPI, LangGraph, LiteLLM, Redis, Postgres, Langfuse e Docker Compose.</li>
+</ul>
+
+<p>Su carta è una lista gestibile. In pratica, è il tipo di architettura che diventa fragile molto in fretta se mancano ordine, tracciabilità delle decisioni e una sequenza di implementazione disciplinata.</p>
+
+<p>Il punto non era solo “far funzionare i componenti”. Il punto era capire se un workflow spec-driven regge davvero quando il progetto smette di essere banale e iniziano a crescere integrazioni, vincoli operativi e superficie di cambiamento.</p>
+
+<h2 id="la-soluzione">La soluzione</h2>
+
+<p>Per questo esperimento ho scelto spec-kit, il toolkit open source di GitHub per la spec-driven development.</p>
+
+<p>L’idea è semplice: chiarire l’intento prima dell’implementazione e mantenere vivi gli artefatti che guidano il delivery. Nel concreto, il workflow si articola in cinque fasi:</p>
+
+<ol>
+  <li><strong>Constitution</strong>: principi e vincoli non negoziabili.</li>
+  <li><strong>Specify</strong>: comportamento atteso, valore e acceptance criteria.</li>
+  <li><strong>Plan</strong>: architettura, stack, tradeoff e vincoli tecnici.</li>
+  <li><strong>Tasks</strong>: task ordinati e dipendenti, pronti per l’esecuzione.</li>
+  <li><strong>Implement</strong>: sviluppo incrementale con validazione continua.</li>
+</ol>
+
+<p>La parte interessante non è il numero di file generati. È il fatto che ogni decisione trovi un posto preciso in cui vivere.</p>
+
+<p>Un vincolo non resta nel prompt del momento. Un tradeoff non si perde nella chat history. Un criterio di accettazione non rimane implicito nella testa di chi guida l’agente.</p>
+
+<h2 id="walkthrough-pratico">Walkthrough pratico</h2>
+
+<p>La lezione più utile non è arrivata dai tool scelti, ma da come il lavoro ha avanzato davvero.</p>
+
+<h3 id="1-prima-la-specifica-poi-il-codice">1. Prima la specifica, poi il codice</h3>
+
+<p>Prima di toccare il codice applicativo sono stati definiti gli artefatti di specifica: constitution, spec, checklist, plan e task list.</p>
+
+<p>Questa sequenza sembra formale, ma in realtà cambia il comportamento del progetto. Costringe a chiarire subito quali vincoli contano davvero e impedisce di demandare tutto all’improvvisazione del momento.</p>
+
+<h3 id="2-i-vincoli-infrastrutturali-vanno-dichiarati-presto">2. I vincoli infrastrutturali vanno dichiarati presto</h3>
+
+<p>Il requisito di bootstrap con un solo comando, per esempio, è stato scritto nel piano prima ancora che esistesse il Compose file.</p>
+
+<p>Questo ha avuto un effetto concreto: l’infrastruttura è stata costruita per rispettare il vincolo fin dall’inizio, invece di retrofittarlo più tardi con workaround, health check tardivi e startup order impliciti.</p>
+
+<p>Quando un vincolo arriva tardi, di solito si paga due volte: una in implementazione e una in debugging.</p>
+
+<h3 id="3-il-vero-valore-dei-task-è-mantenere-chiara-la-causalità">3. Il vero valore dei task è mantenere chiara la causalità</h3>
+
+<p>Nel modo corretto di usare spec-kit, il file dei task non è un backlog generico. È un contratto di esecuzione:</p>
+
+<ol>
+  <li>prendi un task;</li>
+  <li>implementa solo quel task;</li>
+  <li>valida il risultato;</li>
+  <li>marca il task come completato;</li>
+  <li>passa al successivo.</li>
+</ol>
+
+<p>Il vantaggio non è burocratico. È diagnostico.</p>
+
+<p>Se il cambiamento è piccolo, capisci rapidamente cosa ha rotto cosa. Se unisci troppi task in un’unica ondata di lavoro, perdi proprio il beneficio principale del metodo: mantenere leggibile il rapporto tra decisione, modifica e risultato.</p>
+
+<h3 id="4-il-feedback-loop-si-rompe-molto-prima-di-quanto-sembri">4. Il feedback loop si rompe molto prima di quanto sembri</h3>
+
+<p>A un certo punto ho rotto io stesso questa disciplina: 64 file modificati in un solo burst, con circa 2300 linee aggiunte.</p>
+
+<p><img src="/assets/img/blog/big-bang.png" alt="Big-bang change set: il punto in cui il feedback loop smette di essere leggibile" /></p>
+
+<p>Da lì il feedback loop ha iniziato a degradarsi:</p>
+
+<ul>
+  <li>troppa superficie modificata in una volta sola;</li>
+  <li>catena causale poco chiara quando qualcosa falliva;</li>
+  <li>volume di codice alto, ma confidenza reale bassa;</li>
+  <li>rollback costoso, perché eliminava insieme parti corrette e parti sbagliate.</li>
+</ul>
+
+<p>Questa è probabilmente la lezione più importante dell’esperimento: spec-kit è una struttura, non un guardrail. Il metodo non ti impedisce di sbagliare. Funziona solo se mantieni davvero il lavoro in slice piccole e verificabili.</p>
+
+<h3 id="5-gli-errori-utili-vanno-promossi-a-regole-di-delivery">5. Gli errori utili vanno promossi a regole di delivery</h3>
+
+<p>In un sistema nuovo, i requisiti che contano emergono spesso mentre costruisci e fai girare il software. Li scopri negli edge case, negli attriti tra servizi, nei test fragili, nelle configurazioni ambigue.</p>
+
+<p>Per questo la domanda utile non è “quanto codice ha scritto l’agente?”, ma “quale vincolo mancava nella specifica per rendere quel comportamento prevedibile?”.</p>
+
+<p>Quando il processo funziona, anche i failure diventano materiale di progetto:</p>
+
+<ul>
+  <li>un problema di startup ordering diventa un vincolo esplicito nel plan;</li>
+  <li>un’ambiguità sul model routing diventa una regola chiara di configurazione;</li>
+  <li>un test instabile tra locale e CI diventa un checkpoint di validazione nel task.</li>
+</ul>
+
+<p>Questo è il punto in cui la costruzione del software smette di produrre solo output e inizia a produrre conoscenza riusabile.</p>
+
+<h2 id="conclusioni-e-prossimi-passi">Conclusioni e prossimi passi</h2>
+
+<p>Il takeaway più interessante non riguarda la velocità iniziale. Riguarda la qualità del feedback loop.</p>
+
+<p>Spec-kit mi è stato utile perché ha reso espliciti i vincoli prima del codice, ha dato una casa alle decisioni architetturali e ha reso più naturale lavorare in task piccoli e verificabili. Ma la lezione vera è un’altra: il metodo da solo non basta. Se torni a batch troppo grandi, test tardivi e validazione opaca, anche un workflow specification-driven perde gran parte del suo valore.</p>
+
+<p>È anche il motivo per cui faccio fatica a vedere utile un agente lasciato in autonomia per ore su qualcosa di nuovo e ancora poco compreso. Su ticket circoscritti il perimetro è noto. Su un sistema nuovo, invece, il lavoro serve anche a scoprire i vincoli. E quel loop di scoperta richiede presenza umana continua, non solo review finale.</p>
+
+<p>Per un’agenzia tecnica, il punto pratico è chiaro: il vantaggio competitivo non sta nel “far scrivere più codice all’agente”, ma nel costruire un processo che renda il delivery più leggibile, più revisionabile e più riusabile nel tempo.</p>
+
+<p>I prossimi passi naturali, dopo un esperimento di questo tipo, sono tre:</p>
+
+<ol>
+  <li>formalizzare una pratica di task slicing per i progetti agentici;</li>
+  <li>rendere espliciti i vincoli minimi di delivery nei prototipi multi-servizio;</li>
+  <li>trasformare i failure ricorrenti in regole operative e checklist di validazione.</li>
+</ol>]]></content><author><name>Federico Cerruto</name></author><category term="Spec-driven development" /><category term="Agenti AI" /><category term="AI Engineering" /><category term="Delivery" /><category term="Platform Engineering" /><summary type="html"><![CDATA[Spec-kit è utile non tanto perché accelera il primo giorno, ma perché rende più leggibile il decimo: decisioni tracciate, task più piccoli e un feedback loop che resta gestibile anche quando il sistema inizia a complicarsi.]]></summary></entry><entry><title type="html">Cosa cambia davvero con gli agenti AI (quando esci dalla demo)</title><link href="https://2brainlab.it/blog/2026/03/16/cosa-cambia-davvero-con-gli-agenti/" rel="alternate" type="text/html" title="Cosa cambia davvero con gli agenti AI (quando esci dalla demo)" /><published>2026-03-16T00:00:00+00:00</published><updated>2026-03-16T00:00:00+00:00</updated><id>https://2brainlab.it/blog/2026/03/16/cosa-cambia-davvero-con-gli-agenti</id><content type="html" xml:base="https://2brainlab.it/blog/2026/03/16/cosa-cambia-davvero-con-gli-agenti/"><![CDATA[<h2 id="tldr">TL;DR</h2>
+
+<p>La differenza tra “fare demo con agenti” e “creare valore reale” sta nel metodo.
+Con gli agenti non stai solo delegando task: stai ridisegnando il sistema con cui produci decisioni, software e conoscenza.</p>
+
+<h2 id="il-problema">Il problema</h2>
+
+<p>Nel mercato vediamo spesso due estremi opposti:</p>
+
+<ul>
+  <li>delega cieca: “fa tutto l’agente”;</li>
+  <li>micro-delega: “faccio tutto io e l’agente fa compitini”.</li>
+</ul>
+
+<p>Entrambi riducono il valore.</p>
+
+<p>Nel primo caso perdi controllo strategico e qualità.
+Nel secondo perdi leverage e velocità sostenibile.</p>
+
+<p>In mezzo c’è anche un terzo problema molto diffuso: la conoscenza resta in chat e non entra mai nel sistema. Risultato: errori ripetuti, decisioni non tracciate, rework continuo.</p>
+
+<h2 id="la-soluzione">La soluzione</h2>
+
+<p>Il modello che funziona è collaborativo e revisionabile:</p>
+
+<ul>
+  <li>umano: priorità, vincoli, qualità, giudizio;</li>
+  <li>agente: esecuzione, varianti, controlli, accelerazione;</li>
+  <li>sistema: memoria condivisa e miglioramento cumulativo.</li>
+</ul>
+
+<p>Non è filosofia. È delivery engineering.</p>
+
+<p>Quando questo modello viene applicato in modo disciplinato, il beneficio è misurabile:</p>
+
+<ul>
+  <li>meno attrito operativo;</li>
+  <li>meno rework;</li>
+  <li>migliore qualità percepita;</li>
+  <li>lead time più corto da idea a rilascio.</li>
+</ul>
+
+<h2 id="cosa-cambia-in-pratica-nel-lavoro-quotidiano">Cosa cambia in pratica nel lavoro quotidiano</h2>
+
+<h3 id="cambia-il-modello-operativo">Cambia il modello operativo</h3>
+
+<p>Si passa da richieste spot a loop continui: obiettivo, contesto, esecuzione, feedback, memoria. Senza loop hai output isolati. Con i loop hai capacità che si accumula.</p>
+
+<h3 id="cambia-dove-vive-il-valore">Cambia dove vive il valore</h3>
+
+<p>Il valore non è nel singolo prompt riuscito. È nella conoscenza che resta: decisioni con razionale, checklist, playbook, anti-pattern già emersi.</p>
+
+<h3 id="cambia-la-governance">Cambia la governance</h3>
+
+<p>Più throughput richiede più controllo, non meno.
+Workflow PR-based, check pre-merge, rollback semplice e policy sulle azioni esterne sono il minimo sindacale per evitare “velocità a debito”.</p>
+
+<h3 id="cambiano-le-metriche">Cambiano le metriche</h3>
+
+<p>Contare i task chiusi non basta.
+Le metriche utili sono affidabilità e qualità di delivery: lead time, tasso di rework, incidenti post-rilascio, riuso dei playbook.</p>
+
+<p><img src="/assets/img/blog/cosa-cambia-davvero-con-gli-agenti.jpg" alt="Cosa cambia davvero con gli agenti: da automazione tattica a sistema operativo collaborativo" /></p>
+
+<h2 id="conclusioni-e-prossimi-passi">Conclusioni e prossimi passi</h2>
+
+<p>Il tema non è scegliere tra umano o agente.
+Il tema è progettare una collaborazione che migliori entrambi nel tempo.</p>
+
+<p>Per i team piccoli questo è un moltiplicatore reale: meno dispersione, più continuità, più qualità che resta.</p>
+
+<p>Prossimo passo pratico consigliato:</p>
+
+<ol>
+  <li>definire uno schema decisionale unico (template ADR leggero);</li>
+  <li>introdurre una review periodica (es. trimestrale) dei processi e dei risultati;</li>
+  <li>rendere la knowledge base parte esplicita del ciclo di delivery.</li>
+</ol>]]></content><author><name>Federico François</name></author><category term="Agenti AI" /><category term="AI Engineering" /><category term="Knowledge Management" /><category term="Operating Model" /><category term="Delivery" /><summary type="html"><![CDATA[Il salto vero non è automatizzare qualche task in più. È cambiare il modello operativo: obiettivi chiari, memoria condivisa, governance revisionabile e collaborazione continua tra umano e agente.]]></summary></entry><entry><title type="html">Dal catalogo sparso a un assistente vendite AI per rispondere ai clienti</title><link href="https://2brainlab.it/blog/2026/03/13/assistente-vendite-ai-catalogo-prodotti/" rel="alternate" type="text/html" title="Dal catalogo sparso a un assistente vendite AI per rispondere ai clienti" /><published>2026-03-13T00:00:00+00:00</published><updated>2026-03-13T00:00:00+00:00</updated><id>https://2brainlab.it/blog/2026/03/13/assistente-vendite-ai-catalogo-prodotti</id><content type="html" xml:base="https://2brainlab.it/blog/2026/03/13/assistente-vendite-ai-catalogo-prodotti/"><![CDATA[<h2 id="tldr">TL;DR</h2>
+
+<p>Quando le informazioni di prodotto sono distribuite tra PDF, sito web e
+materiali non strutturati, il team vendite perde tempo e rischia risposte
+incomplete. In questo use case abbiamo centralizzato il catalogo, costruito un
+agente in n8n e reso disponibili risposte tecniche immediate tramite una chat
+usata direttamente dai venditori.</p>
+
+<h2 id="il-problema">Il problema</h2>
+
+<p>Il cliente aveva un catalogo prodotti ricco di informazioni, ma estremamente
+frammentato:</p>
+
+<ul>
+  <li>schede tecniche in PDF;</li>
+  <li>contenuti pubblicati sul sito;</li>
+  <li>dettagli distribuiti in fonti diverse, con formati e aggiornamenti non uniformi.</li>
+</ul>
+
+<p>Questo creava un problema operativo molto concreto. I venditori dovevano
+rispondere rapidamente ai clienti, spesso su aspetti tecnici dei prodotti, ma
+non avevano sempre il livello di competenza necessario per recuperare e
+interpretare in autonomia tutte le informazioni disponibili.</p>
+
+<p>Il risultato era prevedibile:</p>
+
+<ul>
+  <li>tempi più lunghi per rispondere;</li>
+  <li>dipendenza da figure tecniche interne;</li>
+  <li>rischio di dare informazioni parziali o incoerenti;</li>
+  <li>bassa scalabilità del supporto commerciale.</li>
+</ul>
+
+<p>In pratica, il problema non era solo “trovare i dati”, ma renderli
+interrogabili in modo semplice, affidabile e utile nel flusso quotidiano del
+team sales.</p>
+
+<h2 id="la-soluzione">La soluzione</h2>
+
+<p>Abbiamo progettato uno strumento interno pensato per un obiettivo preciso:
+permettere ai venditori di fare una domanda in linguaggio naturale e ottenere
+subito una risposta tecnica utilizzabile con il cliente.</p>
+
+<p>L’architettura è stata costruita in tre passaggi:</p>
+
+<ol>
+  <li><strong>Raccolta delle fonti</strong>: abbiamo implementato parser e scraper per
+  recuperare le informazioni da PDF, sito web e altre sorgenti rilevanti.</li>
+  <li><strong>Razionalizzazione del catalogo</strong>: abbiamo normalizzato i dati, eliminato
+  ridondanze e trasformato contenuti dispersi in una base informativa
+  coerente.</li>
+  <li><strong>Accesso conversazionale</strong>: abbiamo costruito un agente con n8n,
+  interrogabile tramite il nodo chat di n8n, così che i venditori potessero
+  usarlo online come un assistente operativo.</li>
+</ol>
+
+<p>Per la persistenza abbiamo inserito il catalogo consolidato in un database
+relazionale. Questa scelta ci ha dato una struttura chiara per prodotti,
+attributi, relazioni e varianti, semplificando sia la manutenzione sia il
+recupero delle informazioni da parte dell’agente.</p>
+
+<p>L’agente non è quindi un semplice chatbot “generico”, ma un’interfaccia
+conversazionale sopra una base dati razionalizzata e mantenibile.</p>
+
+<h2 id="walkthrough-pratico">Walkthrough pratico</h2>
+
+<p>Di seguito il flusso di lavoro che abbiamo seguito.</p>
+
+<h3 id="1-mappatura-delle-fonti-informative">1. Mappatura delle fonti informative</h3>
+
+<p>Il primo step è stato identificare dove vivevano davvero le informazioni utili:</p>
+
+<ul>
+  <li>PDF commerciali e tecnici;</li>
+  <li>pagine prodotto del sito;</li>
+  <li>eventuali contenuti descrittivi o schede accessorie.</li>
+</ul>
+
+<p>Questa fase è fondamentale perché, in molti casi, il problema non è l’assenza
+di dati ma la loro dispersione.</p>
+
+<h3 id="2-parser-e-scraper-per-estrarre-il-contenuto">2. Parser e scraper per estrarre il contenuto</h3>
+
+<p>Abbiamo costruito componenti dedicati per:</p>
+
+<ul>
+  <li>leggere i PDF e recuperarne il testo utile;</li>
+  <li>estrarre le informazioni strutturate e semi-strutturate dal sito;</li>
+  <li>uniformare campi, nomenclature e unità di misura dove necessario.</li>
+</ul>
+
+<p>L’obiettivo non era solo “ingestire documenti”, ma trasformare materiali
+eterogenei in dati realmente utilizzabili in produzione.</p>
+
+<h3 id="3-modello-dati-relazionale">3. Modello dati relazionale</h3>
+
+<p>Una volta raccolte le informazioni, le abbiamo organizzate in un database
+relazionale.</p>
+
+<p>Questo passaggio ha permesso di:</p>
+
+<ul>
+  <li>centralizzare il catalogo;</li>
+  <li>definire relazioni chiare tra prodotti e caratteristiche;</li>
+  <li>gestire meglio aggiornamenti e manutenzione;</li>
+  <li>dare all’agente una fonte più affidabile rispetto a documenti isolati.</li>
+</ul>
+
+<h3 id="4-agente-conversazionale-in-n8n">4. Agente conversazionale in n8n</h3>
+
+<p>Sopra questa base abbiamo costruito un agente in n8n, esposto tramite il nodo
+chat.</p>
+
+<p>Dal punto di vista del venditore, l’esperienza è semplice:</p>
+
+<ul>
+  <li>scrive una domanda;</li>
+  <li>l’agente recupera le informazioni rilevanti;</li>
+  <li>restituisce una risposta sintetica e operativa.</li>
+</ul>
+
+<p>Dal punto di vista del business, il valore è ancora più chiaro:</p>
+
+<ul>
+  <li>meno interruzioni verso il team tecnico;</li>
+  <li>risposte più rapide ai clienti;</li>
+  <li>maggiore autonomia commerciale;</li>
+  <li>migliore utilizzo del patrimonio informativo già esistente.</li>
+</ul>
+
+<p><img src="/assets/img/blog/sales-assistant.png" alt="Workflow n8n assistente vendite" /></p>
+
+<h2 id="conclusioni-e-prossimi-passi">Conclusioni e prossimi passi</h2>
+
+<p>Questo use case mostra un pattern molto ricorrente nei progetti AI applicati
+alle operations commerciali: il valore non nasce dal chatbot in sé, ma dalla
+qualità del lavoro fatto prima sul dato.</p>
+
+<p>La parte decisiva è stata trasformare un catalogo disperso in una base
+informativa interrogabile. Solo a quel punto l’agente in n8n è diventato
+davvero utile per i venditori.</p>
+
+<p>I prossimi passi naturali, in un’evoluzione di questo progetto, sarebbero:</p>
+
+<ul>
+  <li>introdurre workflow di aggiornamento automatico delle fonti;</li>
+  <li>aggiungere tracciamento delle domande più frequenti;</li>
+  <li>misurare tempi di risposta e impatto sul tasso di conversione;</li>
+  <li>collegare il sistema a CRM o strumenti di customer support.</li>
+</ul>
+
+<p>Per un’agenzia come la nostra, è anche un caso interessante da riutilizzare nel
+framework prototipi: stessa logica, fonti diverse, stesso outcome operativo.</p>]]></content><author><name>2brainlab</name></author><category term="AI sales enablement" /><category term="catalog intelligence" /><category term="n8n" /><category term="chatbot aziendale" /><category term="product data" /><category term="automazione commerciale" /><summary type="html"><![CDATA[Quando le informazioni di prodotto sono distribuite tra PDF, sito web e materiali non strutturati, il team vendite perde tempo e rischia risposte incomplete. In questo use case abbiamo centralizzato il catalogo, costruito un agente in n8n e reso disponibili risposte tecniche immediate tramite una chat usata direttamente dai venditori.]]></summary></entry><entry><title type="html">Implementare un agente con GitHub Copilot: dall’idea al commit</title><link href="https://2brainlab.it/blog/2026/03/10/implementazione-agent-github-copilot/" rel="alternate" type="text/html" title="Implementare un agente con GitHub Copilot: dall’idea al commit" /><published>2026-03-10T00:00:00+00:00</published><updated>2026-03-10T00:00:00+00:00</updated><id>https://2brainlab.it/blog/2026/03/10/implementazione-agent-github-copilot</id><content type="html" xml:base="https://2brainlab.it/blog/2026/03/10/implementazione-agent-github-copilot/"><![CDATA[<h2 id="tldr">TL;DR</h2>
+<p>GitHub Copilot non è solo autocompletamento. Configurato come agente, diventa uno strumento per automatizzare task ripetitivi, generare contenuti strutturati e mantenere la knowledge base aggiornata senza effort manuale.</p>
+
+<h2 id="il-problema">Il problema</h2>
+<p>Lavorare in un team piccolo significa ogni ora spesa su task ripetitivi è un’ora tolta a lavoro ad alto valore. La documentazione si accumula in ritardo, i contenuti vengono rimandati e le decisioni rimangono nella memoria delle persone anziché nel repository.</p>
+
+<p>Il rischio concreto per un’agenzia di due persone:</p>
+
+<ul>
+  <li>knowledge base che invecchia senza aggiornamenti;</li>
+  <li>articoli mai pubblicati perché “manca tempo per scriverli”;</li>
+  <li>decisioni prese oralmente e non documentate;</li>
+  <li>overhead elevato per ogni nuovo cliente o progetto.</li>
+</ul>
+
+<h2 id="la-soluzione">La soluzione</h2>
+<p>Invece di usare Copilot come strumento di completamento passivo, lo configuriamo come agente attivo con:</p>
+
+<ol>
+  <li><strong>Istruzioni contestuali</strong> (<code class="language-plaintext highlighter-rouge">copilot-instructions.md</code>) che definiscono template, convenzioni e comandi operativi;</li>
+  <li><strong>Workflow predefiniti</strong> per i task più comuni (articoli, tool evaluation, ADR, prototipi);</li>
+  <li><strong>Integrazione con il repository</strong> come unica fonte di verità per tutto il lavoro dell’agenzia.</li>
+</ol>
+
+<p>Il risultato: un ciclo di lavoro dove l’agente conosce la struttura del progetto, segue le convenzioni stabilite e produce output immediatamente utilizzabili.</p>
+
+<h2 id="walkthrough-pratico">Walkthrough pratico</h2>
+
+<h3 id="1-definisci-le-istruzioni-base">1) Definisci le istruzioni base</h3>
+
+<p>Il file <code class="language-plaintext highlighter-rouge">.github/copilot-instructions.md</code> è il punto di partenza. Struttura le istruzioni in tre blocchi:</p>
+
+<ul>
+  <li><strong>Contesto dell’organizzazione</strong>: chi siete, cosa fate, quali sono le directory chiave;</li>
+  <li><strong>Comandi operativi</strong>: mapping tra richiesta in linguaggio naturale e azione concreta;</li>
+  <li><strong>Principi trasversali</strong>: lingua, tono, convenzioni di naming.</li>
+</ul>
+
+<p>Regola chiave: sii specifico sui template, non sui risultati. L’agente è bravo a rispettare strutture, non a indovinare intenzioni vaghe.</p>
+
+<h3 id="2-configura-i-template-per-ogni-tipo-di-contenuto">2) Configura i template per ogni tipo di contenuto</h3>
+
+<p>Per ogni tipo di contenuto nel repository definisci:</p>
+
+<ul>
+  <li>percorso file (<code class="language-plaintext highlighter-rouge">content/articles/YYYY-MM-DD-slug.md</code>);</li>
+  <li>struttura del front matter (per blog, valutazioni tool, ADR);</li>
+  <li>sezioni obbligatorie e sezioni facoltative;</li>
+  <li>esempi di output atteso.</li>
+</ul>
+
+<p>Questo riduce drasticamente il tempo di review dell’output generato.</p>
+
+<h3 id="3-integra-la-generazione-nel-flusso-quotidiano">3) Integra la generazione nel flusso quotidiano</h3>
+
+<p>L’agente è più efficace quando lo usi in modo routinario, non episodico. Alcuni pattern che funzionano:</p>
+
+<ul>
+  <li><strong>Fine sprint</strong>: chiedi all’agente una sintesi delle decisioni prese e crea ADR automaticamente;</li>
+  <li><strong>Dopo una demo</strong>: usa il template walkthrough per documentare lo step-by-step mentre è ancora fresco;</li>
+  <li><strong>Prima di una call cliente</strong>: chiedi lo stato dell’agenzia e usa il report come briefing.</li>
+</ul>
+
+<h3 id="4-misura-la-riduzione-del-friction">4) Misura la riduzione del friction</h3>
+
+<p>Dopo 2-3 settimane misura:</p>
+
+<ul>
+  <li>tempo medio per produrre un articolo (prima vs. dopo);</li>
+  <li>numero di ADR create nel periodo;</li>
+  <li>percentuale di template rispettati senza correzioni manuali.</li>
+</ul>
+
+<p>Se il friction non scende, rivedere le istruzioni è più efficace che cambiare strumento.</p>
+
+<h3 id="5-itera-le-istruzioni-come-codice">5) Itera le istruzioni come codice</h3>
+
+<p>Le <code class="language-plaintext highlighter-rouge">copilot-instructions.md</code> vanno trattate come codice di produzione:</p>
+
+<ul>
+  <li>versionamento con commit message descrittivi;</li>
+  <li>review dopo ogni output non soddisfacente;</li>
+  <li>test rapido: fai la stessa richiesta prima e dopo la modifica e confronta.</li>
+</ul>
+
+<h2 id="conclusioni-e-prossimi-passi">Conclusioni e prossimi passi</h2>
+<p>Un agente ben configurato non sostituisce il giudizio umano — lo amplifica. Il valore non è nell’automazione cieca, ma nel ridurre il costo operativo delle task note per liberare capacità cognitiva per quelle nuove.</p>
+
+<p>Prossimi passi per implementare questo setup:</p>
+
+<ol>
+  <li>creare o revisionare il file <code class="language-plaintext highlighter-rouge">copilot-instructions.md</code> con i comandi operativi core;</li>
+  <li>definire i template per i 3-4 contenuti più frequenti;</li>
+  <li>testare con un ciclo di lavoro reale (una settimana);</li>
+  <li>misurare friction prima e dopo;</li>
+  <li>documentare i pattern che funzionano in una pratica ingegneristica.</li>
+</ol>]]></content><author><name>2brainlab</name></author><category term="GitHub Copilot" /><category term="AI Engineering" /><category term="Agenti AI" /><category term="Automazione" /><category term="Developer Experience" /><summary type="html"><![CDATA[GitHub Copilot non è solo autocompletamento. Configurato come agente, diventa uno strumento per automatizzare task ripetitivi, generare contenuti strutturati e mantenere la knowledge base aggiornata senza effort manuale.]]></summary></entry><entry><title type="html">Model Context Protocol (MCP): guida pragmatica per team di AI engineering</title><link href="https://2brainlab.it/blog/2026/03/09/model-context-protocol-mcp-guida-pragmatica/" rel="alternate" type="text/html" title="Model Context Protocol (MCP): guida pragmatica per team di AI engineering" /><published>2026-03-09T00:00:00+00:00</published><updated>2026-03-09T00:00:00+00:00</updated><id>https://2brainlab.it/blog/2026/03/09/model-context-protocol-mcp-guida-pragmatica</id><content type="html" xml:base="https://2brainlab.it/blog/2026/03/09/model-context-protocol-mcp-guida-pragmatica/"><![CDATA[<h2 id="tldr">TL;DR</h2>
+<p>MCP sta diventando uno standard de-facto per collegare agenti AI a tool e dati in modo interoperabile. Per un team piccolo, il vantaggio principale è ridurre integrazioni ad hoc e velocizzare prototipi riutilizzabili.</p>
+
+<h2 id="il-problema">Il problema</h2>
+<p>Quando costruiamo agenti AI in modo “artigianale”, ogni integrazione (CRM, database, API interne, file system, ticketing) richiede codice custom, policy custom e test custom. Il risultato tipico è:</p>
+
+<ul>
+  <li>tempi lunghi per ogni nuovo prototipo;</li>
+  <li>accoppiamento forte tra agent e strumenti;</li>
+  <li>scarsa portabilità tra IDE, runtime e orchestratori;</li>
+  <li>costi di manutenzione che crescono più velocemente del valore prodotto.</li>
+</ul>
+
+<p>Per un’agenzia di due persone, questo è un collo di bottiglia immediato: meno tempo su discovery e validazione, più tempo su plumbing.</p>
+
+<h2 id="la-soluzione">La soluzione</h2>
+<p>MCP (Model Context Protocol) propone un contratto standard tra:</p>
+
+<ul>
+  <li><strong>client</strong> (es. IDE o applicazione agentica);</li>
+  <li><strong>server MCP</strong> (che espone capacità);</li>
+  <li><strong>capability</strong> (tool, resources, prompt/template contestuali).</li>
+</ul>
+
+<p>In pratica, invece di costruire N integrazioni proprietarie, costruiamo o adottiamo server MCP con interfacce standard. Questo consente:</p>
+
+<ol>
+  <li><strong>Interoperabilità</strong>: lo stesso server può essere usato in più client.</li>
+  <li><strong>Riutilizzo</strong>: capability replicabili tra prototipi diversi.</li>
+  <li><strong>Governance</strong>: controllo più chiaro su permessi, audit e confini operativi.</li>
+  <li><strong>Velocità</strong>: riduzione del tempo da idea a demo.</li>
+</ol>
+
+<p>Per 2brainlab, il valore concreto è allineato alla missione: prototipare soluzioni AI misurabili partendo da problemi reali.</p>
+
+<h2 id="walkthrough-pratico">Walkthrough pratico</h2>
+<p>Scenario: vuoi creare un prototipo “assistente operativo” che interroga documenti progetto e aggiorna task in uno strumento esterno.</p>
+
+<h3 id="1-definisci-capability-minime">1) Definisci capability minime</h3>
+<p>Parti da 2-3 capability ad alto impatto:</p>
+
+<ul>
+  <li>lettura documentazione tecnica (<code class="language-plaintext highlighter-rouge">resources</code>);</li>
+  <li>ricerca semantica o retrieval (<code class="language-plaintext highlighter-rouge">tool</code>);</li>
+  <li>creazione/aggiornamento task (<code class="language-plaintext highlighter-rouge">tool</code>).</li>
+</ul>
+
+<p>Regola pratica: evitare capability “onnivore” all’inizio; meglio primitive semplici e testabili.</p>
+
+<h3 id="2-mappa-i-confini-di-sicurezza">2) Mappa i confini di sicurezza</h3>
+<p>Per ogni capability specifica:</p>
+
+<ul>
+  <li>chi può invocarla;</li>
+  <li>quali parametri sono ammessi;</li>
+  <li>quali side effect produce;</li>
+  <li>quali log servono per audit.</li>
+</ul>
+
+<p>Questo passaggio riduce rischio operativo e rende i test di accettazione più chiari.</p>
+
+<h3 id="3-integra-nel-workflow-prototipi">3) Integra nel workflow prototipi</h3>
+<p>Collega il setup MCP al processo nel workflow di prototipazione:</p>
+
+<ul>
+  <li>fase discovery: identifica integrazioni critiche;</li>
+  <li>fase build: implementa capability minime;</li>
+  <li>fase validation: misura task completion, latenza, error rate;</li>
+  <li>fase learnings: documenta cosa riusare nel prossimo prototipo.</li>
+</ul>
+
+<h3 id="4-definisci-metriche-minime">4) Definisci metriche minime</h3>
+<p>Per evitare “demo che sembrano belle ma non scalano”, misura almeno:</p>
+
+<ul>
+  <li>tempo medio per completare un task end-to-end;</li>
+  <li>percentuale di chiamate tool riuscite;</li>
+  <li>interventi manuali richiesti;</li>
+  <li>qualità percepita dell’output (rubrica 1-5).</li>
+</ul>
+
+<h3 id="5-decidi-il-livello-di-standardizzazione">5) Decidi il livello di standardizzazione</h3>
+<p>Dopo il primo prototipo, stabilisci cosa rendere standard:</p>
+
+<ul>
+  <li>naming capability;</li>
+  <li>schema input/output;</li>
+  <li>policy di errore e retry;</li>
+  <li>tracciamento osservabilità.</li>
+</ul>
+
+<p>Qui emerge spesso una scelta strategica: conviene aprire un ADR per fissare convenzioni MCP interne e ridurre drift tra progetti.</p>
+
+<h2 id="conclusioni-e-prossimi-passi">Conclusioni e prossimi passi</h2>
+<p>MCP non è una “silver bullet”, ma per un’agenzia snella è una leva forte su riuso, velocità e qualità operativa. L’approccio migliore è incrementale: poche capability ad alto valore, metriche semplici, revisione rapida dei learnings.</p>
+
+<p>Prossimi passi consigliati (2 settimane):</p>
+
+<ol>
+  <li>selezionare un caso d’uso interno con ROI evidente;</li>
+  <li>implementare un micro-set di capability MCP (2-3);</li>
+  <li>validare con metriche operative minime;</li>
+  <li>documentare decisioni in un ADR dedicato;</li>
+  <li>trasformare i learnings in un walkthrough pubblico.</li>
+</ol>]]></content><author><name>2brainlab</name></author><category term="MCP" /><category term="Model Context Protocol" /><category term="AI Engineering" /><category term="Agenti AI" /><category term="Prototipazione" /><category term="Interoperabilità" /><summary type="html"><![CDATA[MCP sta diventando uno standard de-facto per collegare agenti AI a tool e dati in modo interoperabile. Per un team piccolo, il vantaggio principale è ridurre integrazioni ad hoc e velocizzare prototipi riutilizzabili.]]></summary></entry></feed>

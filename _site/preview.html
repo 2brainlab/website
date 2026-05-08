@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2brainlab — Brand Preview</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap');
+
+    :root {
+      --ink:     #0e0d0b;
+      --paper:   #f4f0e8;
+      --warm:    #e8dcc8;
+      --ember:   #c94a2a;
+      --copper:  #b5742a;
+      --sage:    #3d5a4a;
+      --mist:    #8c8880;
+      --grid:    rgba(14,13,11,0.06);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'DM Mono', monospace;
+      line-height: 1.7;
+    }
+
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .site-header {
+      border: 1px solid rgba(14,13,11,0.12);
+      background: rgba(244,240,232,0.92);
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo-mark { display: flex; align-items: center; gap: 12px; }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--ember);
+      clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--paper);
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .logo-text {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .logo-text span { color: var(--ember); }
+
+    .hero {
+      margin-top: 18px;
+      border: 1px solid rgba(14,13,11,0.12);
+      background: linear-gradient(180deg, rgba(232,220,200,0.42), rgba(244,240,232,0.92));
+      padding: 30px;
+    }
+
+    .hero-label {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ember);
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(34px, 5vw, 60px);
+      font-weight: 300;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 14px;
+    }
+
+    h1 em { color: var(--copper); }
+
+    .hero p { color: rgba(14,13,11,0.72); max-width: 700px; }
+
+    .chips { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .chip {
+      border: 1px solid rgba(14,13,11,0.2);
+      background: rgba(232,220,200,0.45);
+      padding: 6px 10px;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(14,13,11,0.75);
+    }
+
+    .section {
+      margin-top: 18px;
+      border: 1px solid rgba(14,13,11,0.12);
+      background: #fffdf8;
+      padding: 20px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(14,13,11,0.62);
+      margin-bottom: 14px;
+    }
+
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .swatch {
+      border: 1px solid rgba(14,13,11,0.12);
+      background: white;
+    }
+
+    .swatch-color { height: 56px; }
+
+    .swatch-meta {
+      padding: 8px 10px;
+      font-size: 11px;
+      color: rgba(14,13,11,0.68);
+      border-top: 1px solid rgba(14,13,11,0.12);
+    }
+
+    .post-card {
+      display: grid;
+      grid-template-columns: 120px 1fr auto;
+      gap: 20px;
+      align-items: start;
+      padding: 18px 0;
+      border-top: 1px solid rgba(14,13,11,0.1);
+    }
+
+    .post-date {
+      font-size: 11px;
+      color: rgba(14,13,11,0.58);
+      letter-spacing: 0.08em;
+    }
+
+    .post-title {
+      font-family: 'Fraunces', serif;
+      font-size: 28px;
+      font-weight: 300;
+      line-height: 1.2;
+      color: rgba(14,13,11,0.88);
+      margin-bottom: 8px;
+    }
+
+    .post-excerpt { font-size: 14px; color: rgba(14,13,11,0.72); }
+
+    .post-arrow {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(14,13,11,0.5);
+      padding-top: 8px;
+    }
+
+    .site-footer {
+      margin-top: 18px;
+      border: 1px solid rgba(14,13,11,0.12);
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: rgba(14,13,11,0.58);
+      font-size: 11px;
+    }
+
+    @media (max-width: 900px) {
+      .container { padding: 18px; }
+      .post-card { grid-template-columns: 1fr; gap: 8px; }
+      .post-arrow { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="site-header">
+      <div class="logo-mark">
+        <div class="logo-icon">2b</div>
+        <div class="logo-text">2brain<span>lab</span></div>
+      </div>
+      <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(14,13,11,0.58)">
+        Preview locale
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-label">AI ENGINEERING BLOG</div>
+      <h1>Soluzioni <em>concrete</em><br>per problemi reali.</h1>
+      <p>Preview statica per validare rapidamente palette, contrasto e gerarchia tipografica senza build Jekyll.</p>
+      <div class="chips">
+        <span class="chip">Pragmatismo</span>
+        <span class="chip">Trasparenza</span>
+        <span class="chip">Qualità</span>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">Palette</div>
+      <div class="swatches">
+        <div class="swatch"><div class="swatch-color" style="background: var(--paper)"></div><div class="swatch-meta">paper · #f4f0e8</div></div>
+        <div class="swatch"><div class="swatch-color" style="background: var(--ink)"></div><div class="swatch-meta">ink · #0e0d0b</div></div>
+        <div class="swatch"><div class="swatch-color" style="background: var(--warm)"></div><div class="swatch-meta">warm · #e8dcc8</div></div>
+        <div class="swatch"><div class="swatch-color" style="background: var(--ember)"></div><div class="swatch-meta">ember · #c94a2a</div></div>
+        <div class="swatch"><div class="swatch-color" style="background: var(--copper)"></div><div class="swatch-meta">copper · #b5742a</div></div>
+        <div class="swatch"><div class="swatch-color" style="background: var(--sage)"></div><div class="swatch-meta">sage · #3d5a4a</div></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">Card articolo</div>
+      <article class="post-card">
+        <div class="post-date">13.03.2026</div>
+        <div>
+          <div class="post-title">Implementazione agent con GitHub Copilot</div>
+          <p class="post-excerpt">Esempio di anteprima per testare leggibilità del titolo, testo descrittivo e spaziature.</p>
+        </div>
+        <div class="post-arrow">Leggi</div>
+      </article>
+    </section>
+
+    <footer class="site-footer">
+      <div>2brainlab · brand preview</div>
+      <div>Apri: http://127.0.0.1:8080/preview.html</div>
+    </footer>
+  </div>
+</body>
+</html>

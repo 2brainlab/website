@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dal catalogo sparso a un assistente vendite AI per rispondere ai clienti — 2brainlab</title>
+  <meta name="description" content="Quando le informazioni di prodotto sono distribuite tra PDF, sito web e materiali non strutturati, il team vendite perde tempo e rischia risposte incomplete....">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link type="application/atom+xml" rel="alternate" href="https://2brainlab.it/feed.xml" title="2brainlab" />
+  <!-- Begin Jekyll SEO tag v2.9.0 -->
+<title>Dal catalogo sparso a un assistente vendite AI per rispondere ai clienti | 2brainlab</title>
+<meta name="generator" content="Jekyll v4.4.1" />
+<meta property="og:title" content="Dal catalogo sparso a un assistente vendite AI per rispondere ai clienti" />
+<meta name="author" content="2brainlab" />
+<meta property="og:locale" content="it" />
+<meta name="description" content="Quando le informazioni di prodotto sono distribuite tra PDF, sito web e materiali non strutturati, il team vendite perde tempo e rischia risposte incomplete. In questo use case abbiamo centralizzato il catalogo, costruito un agente in n8n e reso disponibili risposte tecniche immediate tramite una chat usata direttamente dai venditori." />
+<meta name="twitter:description" property="og:description" content="Quando le informazioni di prodotto sono distribuite tra PDF, sito web e materiali non strutturati, il team vendite perde tempo e rischia risposte incomplete. In questo use case abbiamo centralizzato il catalogo, costruito un agente in n8n e reso disponibili risposte tecniche immediate tramite una chat usata direttamente dai venditori." />
+<link rel="canonical" href="https://2brainlab.it/blog/2026/03/13/assistente-vendite-ai-catalogo-prodotti/" />
+<meta property="og:url" content="https://2brainlab.it/blog/2026/03/13/assistente-vendite-ai-catalogo-prodotti/" />
+<meta property="og:site_name" content="2brainlab" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2026-03-13T00:00:00+00:00" />
+<meta property="article:modified_time" content="2026-03-13T00:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Dal catalogo sparso a un assistente vendite AI per rispondere ai clienti" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"2brainlab"},"dateModified":"2026-03-13T00:00:00+00:00","datePublished":"2026-03-13T00:00:00+00:00","description":"Quando le informazioni di prodotto sono distribuite tra PDF, sito web e materiali non strutturati, il team vendite perde tempo e rischia risposte incomplete. In questo use case abbiamo centralizzato il catalogo, costruito un agente in n8n e reso disponibili risposte tecniche immediate tramite una chat usata direttamente dai venditori.","headline":"Dal catalogo sparso a un assistente vendite AI per rispondere ai clienti","mainEntityOfPage":{"@type":"WebPage","@id":"https://2brainlab.it/blog/2026/03/13/assistente-vendite-ai-catalogo-prodotti/"},"url":"https://2brainlab.it/blog/2026/03/13/assistente-vendite-ai-catalogo-prodotti/"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+<body>
+
+  <header class="site-header">
+    <a href="/" class="logo-mark">
+      <div class="logo-icon">2b</div>
+      <div class="logo-text">2brain<span>lab</span></div>
+    </a>
+    <nav class="site-nav">
+      <a href="/blog/" class="active">Blog</a>
+      <a href="/chi-siamo/" >Chi siamo</a>
+    </nav>
+  </header>
+
+  <main>
+    <article class="post-wrapper">
+
+  <header class="post-header">
+    <div class="post-eyebrow">
+      13 March 2026
+       · 2brainlab
+    </div>
+
+    <h1>Dal catalogo sparso a un assistente vendite AI per rispondere ai clienti</h1>
+
+    <div class="post-info">
+      
+      <span class="post-info-author-wrap">
+        
+        <span class="post-info-author">2brainlab</span>
+      </span>
+      <span class="post-info-sep">·</span>
+      
+      <span class="post-info-date">13 March 2026</span>
+      
+      <span class="post-info-sep">·</span>
+      <div class="post-info-tags">
+        
+        <span class="post-info-tag">AI sales enablement</span>
+        
+        <span class="post-info-tag">catalog intelligence</span>
+        
+        <span class="post-info-tag">n8n</span>
+        
+        <span class="post-info-tag">chatbot aziendale</span>
+        
+        <span class="post-info-tag">product data</span>
+        
+        <span class="post-info-tag">automazione commerciale</span>
+        
+      </div>
+      
+    </div>
+  </header>
+
+  <div class="post-body">
+    <h2 id="tldr">TL;DR</h2>
+
+<p>Quando le informazioni di prodotto sono distribuite tra PDF, sito web e
+materiali non strutturati, il team vendite perde tempo e rischia risposte
+incomplete. In questo use case abbiamo centralizzato il catalogo, costruito un
+agente in n8n e reso disponibili risposte tecniche immediate tramite una chat
+usata direttamente dai venditori.</p>
+
+<h2 id="il-problema">Il problema</h2>
+
+<p>Il cliente aveva un catalogo prodotti ricco di informazioni, ma estremamente
+frammentato:</p>
+
+<ul>
+  <li>schede tecniche in PDF;</li>
+  <li>contenuti pubblicati sul sito;</li>
+  <li>dettagli distribuiti in fonti diverse, con formati e aggiornamenti non uniformi.</li>
+</ul>
+
+<p>Questo creava un problema operativo molto concreto. I venditori dovevano
+rispondere rapidamente ai clienti, spesso su aspetti tecnici dei prodotti, ma
+non avevano sempre il livello di competenza necessario per recuperare e
+interpretare in autonomia tutte le informazioni disponibili.</p>
+
+<p>Il risultato era prevedibile:</p>
+
+<ul>
+  <li>tempi più lunghi per rispondere;</li>
+  <li>dipendenza da figure tecniche interne;</li>
+  <li>rischio di dare informazioni parziali o incoerenti;</li>
+  <li>bassa scalabilità del supporto commerciale.</li>
+</ul>
+
+<p>In pratica, il problema non era solo “trovare i dati”, ma renderli
+interrogabili in modo semplice, affidabile e utile nel flusso quotidiano del
+team sales.</p>
+
+<h2 id="la-soluzione">La soluzione</h2>
+
+<p>Abbiamo progettato uno strumento interno pensato per un obiettivo preciso:
+permettere ai venditori di fare una domanda in linguaggio naturale e ottenere
+subito una risposta tecnica utilizzabile con il cliente.</p>
+
+<p>L’architettura è stata costruita in tre passaggi:</p>
+
+<ol>
+  <li><strong>Raccolta delle fonti</strong>: abbiamo implementato parser e scraper per
+  recuperare le informazioni da PDF, sito web e altre sorgenti rilevanti.</li>
+  <li><strong>Razionalizzazione del catalogo</strong>: abbiamo normalizzato i dati, eliminato
+  ridondanze e trasformato contenuti dispersi in una base informativa
+  coerente.</li>
+  <li><strong>Accesso conversazionale</strong>: abbiamo costruito un agente con n8n,
+  interrogabile tramite il nodo chat di n8n, così che i venditori potessero
+  usarlo online come un assistente operativo.</li>
+</ol>
+
+<p>Per la persistenza abbiamo inserito il catalogo consolidato in un database
+relazionale. Questa scelta ci ha dato una struttura chiara per prodotti,
+attributi, relazioni e varianti, semplificando sia la manutenzione sia il
+recupero delle informazioni da parte dell’agente.</p>
+
+<p>L’agente non è quindi un semplice chatbot “generico”, ma un’interfaccia
+conversazionale sopra una base dati razionalizzata e mantenibile.</p>
+
+<h2 id="walkthrough-pratico">Walkthrough pratico</h2>
+
+<p>Di seguito il flusso di lavoro che abbiamo seguito.</p>
+
+<h3 id="1-mappatura-delle-fonti-informative">1. Mappatura delle fonti informative</h3>
+
+<p>Il primo step è stato identificare dove vivevano davvero le informazioni utili:</p>
+
+<ul>
+  <li>PDF commerciali e tecnici;</li>
+  <li>pagine prodotto del sito;</li>
+  <li>eventuali contenuti descrittivi o schede accessorie.</li>
+</ul>
+
+<p>Questa fase è fondamentale perché, in molti casi, il problema non è l’assenza
+di dati ma la loro dispersione.</p>
+
+<h3 id="2-parser-e-scraper-per-estrarre-il-contenuto">2. Parser e scraper per estrarre il contenuto</h3>
+
+<p>Abbiamo costruito componenti dedicati per:</p>
+
+<ul>
+  <li>leggere i PDF e recuperarne il testo utile;</li>
+  <li>estrarre le informazioni strutturate e semi-strutturate dal sito;</li>
+  <li>uniformare campi, nomenclature e unità di misura dove necessario.</li>
+</ul>
+
+<p>L’obiettivo non era solo “ingestire documenti”, ma trasformare materiali
+eterogenei in dati realmente utilizzabili in produzione.</p>
+
+<h3 id="3-modello-dati-relazionale">3. Modello dati relazionale</h3>
+
+<p>Una volta raccolte le informazioni, le abbiamo organizzate in un database
+relazionale.</p>
+
+<p>Questo passaggio ha permesso di:</p>
+
+<ul>
+  <li>centralizzare il catalogo;</li>
+  <li>definire relazioni chiare tra prodotti e caratteristiche;</li>
+  <li>gestire meglio aggiornamenti e manutenzione;</li>
+  <li>dare all’agente una fonte più affidabile rispetto a documenti isolati.</li>
+</ul>
+
+<h3 id="4-agente-conversazionale-in-n8n">4. Agente conversazionale in n8n</h3>
+
+<p>Sopra questa base abbiamo costruito un agente in n8n, esposto tramite il nodo
+chat.</p>
+
+<p>Dal punto di vista del venditore, l’esperienza è semplice:</p>
+
+<ul>
+  <li>scrive una domanda;</li>
+  <li>l’agente recupera le informazioni rilevanti;</li>
+  <li>restituisce una risposta sintetica e operativa.</li>
+</ul>
+
+<p>Dal punto di vista del business, il valore è ancora più chiaro:</p>
+
+<ul>
+  <li>meno interruzioni verso il team tecnico;</li>
+  <li>risposte più rapide ai clienti;</li>
+  <li>maggiore autonomia commerciale;</li>
+  <li>migliore utilizzo del patrimonio informativo già esistente.</li>
+</ul>
+
+<p><img src="/assets/img/blog/sales-assistant.png" alt="Workflow n8n assistente vendite" /></p>
+
+<h2 id="conclusioni-e-prossimi-passi">Conclusioni e prossimi passi</h2>
+
+<p>Questo use case mostra un pattern molto ricorrente nei progetti AI applicati
+alle operations commerciali: il valore non nasce dal chatbot in sé, ma dalla
+qualità del lavoro fatto prima sul dato.</p>
+
+<p>La parte decisiva è stata trasformare un catalogo disperso in una base
+informativa interrogabile. Solo a quel punto l’agente in n8n è diventato
+davvero utile per i venditori.</p>
+
+<p>I prossimi passi naturali, in un’evoluzione di questo progetto, sarebbero:</p>
+
+<ul>
+  <li>introdurre workflow di aggiornamento automatico delle fonti;</li>
+  <li>aggiungere tracciamento delle domande più frequenti;</li>
+  <li>misurare tempi di risposta e impatto sul tasso di conversione;</li>
+  <li>collegare il sistema a CRM o strumenti di customer support.</li>
+</ul>
+
+<p>Per un’agenzia come la nostra, è anche un caso interessante da riutilizzare nel
+framework prototipi: stessa logica, fonti diverse, stesso outcome operativo.</p>
+
+  </div>
+
+  <nav class="post-nav">
+    <a href="/blog/" class="post-nav-back">Tutti gli articoli</a>
+    
+    <a href="/blog/2026/03/16/cosa-cambia-davvero-con-gli-agenti/" class="post-nav-next">
+      Prossimo →
+    </a>
+    
+  </nav>
+
+</article>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-brand">
+      <div class="logo-icon">2b</div>
+      <div class="logo-text">2brain<span>lab</span></div>
+    </div>
+    <div class="footer-tagline">Pragmatismo · Trasparenza · Qualità</div>
+    <div>© 2026 2brainlab</div>
+  </footer>
+
+</body>
+</html>
