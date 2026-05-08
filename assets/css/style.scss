@@ -248,7 +248,8 @@ a { color: inherit; text-decoration: none; }
 
 .focus-list li:last-child { margin-bottom: 0; }
 
-.focus-list li::marker {
+.focus-list li::marker,
+.integration-icon {
   color: var(--ember);
 }
 
@@ -281,7 +282,6 @@ a { color: inherit; text-decoration: none; }
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  color: var(--ember);
 }
 
 /* ─── BLOG LIST ─────────────────────────────────────── */
