@@ -193,6 +193,7 @@ a { color: inherit; text-decoration: none; }
   padding: 18px;
 }
 
+.focus-card h2,
 .focus-card h3 {
   font-family: 'Syne', sans-serif;
   font-size: 14px;
@@ -210,9 +211,6 @@ a { color: inherit; text-decoration: none; }
 
 .focus-list {
   list-style: disc;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
   padding-left: 18px;
 }
 
@@ -220,7 +218,10 @@ a { color: inherit; text-decoration: none; }
   color: rgba(14,13,11,0.72);
   font-size: 13px;
   line-height: 1.6;
+  margin-bottom: 10px;
 }
+
+.focus-list li:last-child { margin-bottom: 0; }
 
 .focus-list li::marker {
   color: var(--ember);
